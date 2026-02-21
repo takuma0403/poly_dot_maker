@@ -7,6 +7,7 @@ services:
       - "8080:8080"
     volumes:
       - ./src:/app/src
+      - ./static:/app/static
       - ./.air.toml:/app/.air.toml
     environment:
       - PORT=8080
