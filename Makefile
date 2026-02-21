@@ -11,7 +11,7 @@ CLOUD_RUN_SERVICE ?= poly-dot-maker
 
 IMAGE_REPO := gcr.io/$(GCP_PROJECT_ID)/$(IMAGE_NAME)
 
-.PHONY: init-env dev build run deploy tidy help
+.PHONY: init-env dev dev-stop build run deploy check-env clean tidy help
 
 ## init-env: .env.example を .env にコピー (初回セットアップ)
 init-env:
@@ -25,6 +25,10 @@ init-env:
 ## dev: ローカル開発 (air ホットリロード)
 dev:
 	docker compose up --build
+
+## dev-stop: 開発コンテナを停止
+dev-stop:
+	docker compose down
 
 ## build: リリース用イメージをビルド
 build:
@@ -53,6 +57,12 @@ check-env:
 ## tidy: go mod tidy
 tidy:
 	go mod tidy
+
+## clean: ビルド成果物・コンテナ・イメージを割り当てて削除
+clean:
+	docker compose down --rmi local --volumes --remove-orphans
+	docker rmi -f $(RELEASE_TAG) 2>/dev/null || true
+	rm -rf tmp/
 
 ## help: ターゲット一覧を表示
 help:
