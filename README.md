@@ -2,6 +2,8 @@
 
 画像をアップロードすると、埋め尽くし可能な様々な形状のタイルで埋め尽くしたドット絵に変換する API サーバー。
 
+**🌐 デモ:** <https://poly-dot-maker-962005752553.asia-northeast1.run.app/>
+
 ## 技術スタック
 
 | 項目 | 内容 |
@@ -21,10 +23,14 @@ poly_dot_maker/
 ├── docker-compose.yml
 ├── .air.toml
 ├── .env.example
+├── static/
+│   └── index.html       # 変換 UI（Web フロントエンド）
 ├── docs/
 │   └── architecture.md  # アーキテクチャ設計ドキュメント
 └── src/
-    └── main.go          # エントリポイント
+    ├── main.go          # エントリポイント
+    └── handler/
+        └── convert.go   # POST /convert ハンドラー
 ```
 
 ## 環境構築
@@ -76,8 +82,41 @@ make tidy        # go mod tidy
 
 | メソッド | パス | 説明 |
 |---------|------|------|
+| `GET` | `/` | 変換 UI ページ（index.html）を返す |
 | `GET` | `/health` | ヘルスチェック |
-| `GET` | `/hello` | Hello World |
+| `POST` | `/convert` | 画像を変換して PNG を返す |
+
+### POST /convert
+
+`multipart/form-data` でリクエストします。
+
+**リクエストフィールド**
+
+| フィールド | 型 | 必須 | デフォルト | 説明 |
+|-----------|-----|------|----------|------|
+| `image` | ファイル | ✅ | — | 変換元画像（JPEG / PNG） |
+| `dots` | 整数 | | `3000` | 点の総数（1以上） |
+| `colors` | 整数 | | `16` | 減色後の色数（5〜30） |
+| `rotate` | 整数 | | `0` | 回転角度（15の倍数、単位: 度） |
+
+**レスポンス**
+
+| 条件 | ステータス | Content-Type | ボディ |
+|------|----------|------------|------|
+| 成功 | `200 OK` | `image/png` | 変換後の PNG 画像 |
+| バリデーションエラー | `400 Bad Request` | `application/json` | エラーメッセージ |
+| サーバーエラー | `500 Internal Server Error` | `application/json` | エラーメッセージ |
+
+**curl 例**
+
+```bash
+curl -X POST https://poly-dot-maker-962005752553.asia-northeast1.run.app/convert \
+  -F "image=@photo.jpg" \
+  -F "dots=5000" \
+  -F "colors=20" \
+  -F "rotate=0" \
+  --output result.png
+```
 
 ## Cloud Run デプロイ手順
 
