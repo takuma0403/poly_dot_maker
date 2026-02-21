@@ -8,5 +8,5 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Source is provided via volume mount at runtime
+# Source (src/) and static files (static/) are provided via volume mount at runtime
 CMD ["air", "-c", ".air.toml"]

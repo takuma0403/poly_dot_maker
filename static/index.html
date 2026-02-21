@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poly Dot Maker</title>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #0f0f13;
+            color: #e8e8f0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            padding: 20px 32px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-bottom: 1px solid #2a2a4a;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.05em;
+        }
+
+        header p {
+            margin-top: 4px;
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        main {
+            width: 100%;
+            max-width: 900px;
+            padding: 40px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        /* ---- Upload area ---- */
+        .upload-area {
+            border: 2px dashed #3a3a5c;
+            border-radius: 16px;
+            padding: 48px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            background: #14141f;
+            position: relative;
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: #a78bfa;
+            background: #1a1a30;
+        }
+
+        .upload-area input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .upload-area p {
+            color: #888;
+            font-size: 0.95rem;
+        }
+
+        .upload-area .filename {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #a78bfa;
+            font-weight: 600;
+        }
+
+        #preview-box {
+            margin-top: 16px;
+        }
+
+        #preview-box img {
+            max-height: 200px;
+            border-radius: 8px;
+            border: 1px solid #2a2a4a;
+        }
+
+        /* ---- Params ---- */
+        .params-card {
+            background: #14141f;
+            border: 1px solid #2a2a4a;
+            border-radius: 16px;
+            padding: 28px 32px;
+        }
+
+        .params-card h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #a78bfa;
+            margin-bottom: 20px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .params-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .param-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .param-group label {
+            font-size: 0.8rem;
+            color: #888;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .param-group .hint {
+            font-size: 0.75rem;
+            color: #555;
+        }
+
+        .param-group input[type="number"],
+        .param-group input[type="range"] {
+            width: 100%;
+        }
+
+        .param-group input[type="number"] {
+            background: #0f0f13;
+            border: 1px solid #2a2a4a;
+            border-radius: 8px;
+            color: #e8e8f0;
+            padding: 8px 12px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        .param-group input[type="number"]:focus {
+            border-color: #a78bfa;
+        }
+
+        .param-group input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            background: #2a2a4a;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .param-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #a78bfa;
+            cursor: pointer;
+        }
+
+        .range-value {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #60a5fa;
+            text-align: right;
+        }
+
+        /* ---- Submit button ---- */
+        #submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #7c3aed, #4f7ff0);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.04em;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+
+        #submit-btn:hover:not(:disabled) {
+            opacity: 0.85;
+        }
+
+        #submit-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        #submit-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* ---- Loading ---- */
+        #loading {
+            display: none;
+            text-align: center;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid #2a2a4a;
+            border-top-color: #a78bfa;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ---- Error ---- */
+        #error-box {
+            display: none;
+            background: #2a1020;
+            border: 1px solid #c0344a;
+            border-radius: 12px;
+            padding: 16px 20px;
+            color: #f87171;
+            font-size: 0.9rem;
+        }
+
+        /* ---- Result ---- */
+        #result-card {
+            display: none;
+            background: #14141f;
+            border: 1px solid #2a2a4a;
+            border-radius: 16px;
+            padding: 28px 32px;
+            text-align: center;
+        }
+
+        #result-card h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #60a5fa;
+            margin-bottom: 20px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        #result-img {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 12px;
+            border: 1px solid #2a2a4a;
+            margin-bottom: 20px;
+        }
+
+        #download-btn {
+            display: inline-block;
+            padding: 12px 32px;
+            background: linear-gradient(135deg, #059669, #0ea5e9);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            letter-spacing: 0.04em;
+            transition: opacity 0.2s;
+        }
+
+        #download-btn:hover {
+            opacity: 0.85;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Poly Dot Maker</h1>
+        <p>画像をポリゴン・ドット点描に変換します</p>
+    </header>
+
+    <main>
+
+        <!-- Upload -->
+        <div class="upload-area" id="upload-area">
+            <input type="file" id="image-input" accept="image/jpeg,image/png">
+            <span class="upload-icon">🖼️</span>
+            <p>クリックまたはドロップで画像を選択</p>
+            <p style="font-size:0.8rem;color:#555;margin-top:4px;">JPEG / PNG</p>
+            <p class="filename" id="filename"></p>
+            <div id="preview-box"></div>
+        </div>
+
+        <!-- Params -->
+        <div class="params-card">
+            <h2>変換パラメータ</h2>
+            <div class="params-grid">
+
+                <div class="param-group">
+                    <label for="dots">Dots（点の数）</label>
+                    <input type="number" id="dots" name="dots" value="3000" min="1" max="50000">
+                    <span class="hint">多いほど細かくなります</span>
+                </div>
+
+                <div class="param-group">
+                    <label for="colors">Colors（色数）</label>
+                    <input type="number" id="colors" name="colors" value="16" min="5" max="30">
+                    <span class="hint">5〜30 の範囲</span>
+                </div>
+
+                <div class="param-group">
+                    <label for="rotate">Rotate（回転）</label>
+                    <input type="range" id="rotate-range" min="0" max="345" step="15" value="0">
+                    <div class="range-value"><span id="rotate-display">0</span> °</div>
+                    <input type="hidden" id="rotate" value="0">
+                    <span class="hint">15° 単位で回転</span>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <button id="submit-btn" disabled>変換する</button>
+
+        <!-- Loading -->
+        <div id="loading">
+            <div class="spinner"></div>
+            変換中です、しばらくお待ちください…
+        </div>
+
+        <!-- Error -->
+        <div id="error-box"></div>
+
+        <!-- Result -->
+        <div id="result-card">
+            <h2>変換結果</h2>
+            <img id="result-img" src="" alt="変換結果">
+            <br>
+            <a id="download-btn" href="#" download="poly_dot_result.png">ダウンロード</a>
+        </div>
+
+    </main>
+
+    <script>
+        const imageInput = document.getElementById('image-input');
+        const uploadArea = document.getElementById('upload-area');
+        const filenameEl = document.getElementById('filename');
+        const previewBox = document.getElementById('preview-box');
+        const submitBtn = document.getElementById('submit-btn');
+        const loadingEl = document.getElementById('loading');
+        const errorBox = document.getElementById('error-box');
+        const resultCard = document.getElementById('result-card');
+        const resultImg = document.getElementById('result-img');
+        const downloadBtn = document.getElementById('download-btn');
+        const rotateRange = document.getElementById('rotate-range');
+        const rotateDisplay = document.getElementById('rotate-display');
+        const rotateHidden = document.getElementById('rotate');
+
+        let selectedFile = null;
+
+        // Drag & drop styling
+        uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', e => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const f = e.dataTransfer.files[0];
+            if (f) handleFile(f);
+        });
+
+        imageInput.addEventListener('change', () => {
+            if (imageInput.files[0]) handleFile(imageInput.files[0]);
+        });
+
+        function handleFile(file) {
+            selectedFile = file;
+            filenameEl.textContent = file.name;
+            previewBox.innerHTML = '';
+            const url = URL.createObjectURL(file);
+            const img = document.createElement('img');
+            img.src = url;
+            previewBox.appendChild(img);
+            submitBtn.disabled = false;
+        }
+
+        // Rotate slider
+        rotateRange.addEventListener('input', () => {
+            rotateDisplay.textContent = rotateRange.value;
+            rotateHidden.value = rotateRange.value;
+        });
+
+        // Submit
+        submitBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            const fd = new FormData();
+            fd.append('image', selectedFile);
+            fd.append('dots', document.getElementById('dots').value);
+            fd.append('colors', document.getElementById('colors').value);
+            fd.append('rotate', rotateHidden.value);
+
+            // UI 状態
+            submitBtn.disabled = true;
+            loadingEl.style.display = 'block';
+            errorBox.style.display = 'none';
+            resultCard.style.display = 'none';
+
+            // 前回の ObjectURL を解放
+            if (resultImg.src.startsWith('blob:')) URL.revokeObjectURL(resultImg.src);
+
+            try {
+                const res = await fetch('/convert', { method: 'POST', body: fd });
+
+                if (!res.ok) {
+                    const msg = await res.text();
+                    throw new Error(`${res.status}: ${msg}`);
+                }
+
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+
+                resultImg.src = url;
+                downloadBtn.href = url;
+                resultCard.style.display = 'block';
+
+            } catch (err) {
+                errorBox.textContent = `エラーが発生しました: ${err.message}`;
+                errorBox.style.display = 'block';
+            } finally {
+                loadingEl.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+
+</body>
+
+</html>
