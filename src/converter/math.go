@@ -39,3 +39,18 @@ func clamp(v, lo, hi int) int {
 	}
 	return v
 }
+
+// pointInPolygon は ray casting 法で点 (px, py) が多角形の内側か判定する。
+func pointInPolygon(px, py float64, pts [][2]float64) bool {
+	inside := false
+	n := len(pts)
+	for i, j := 0, n-1; i < n; j, i = i, i+1 {
+		xi, yi := pts[i][0], pts[i][1]
+		xj, yj := pts[j][0], pts[j][1]
+		intersect := ((yi > py) != (yj > py)) && (px < (xj-xi)*(py-yi)/(yj-yi)+xi)
+		if intersect {
+			inside = !inside
+		}
+	}
+	return inside
+}

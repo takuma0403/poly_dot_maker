@@ -40,6 +40,10 @@ func Convert(c echo.Context) error {
 	}
 
 	// --- パラメータ取得 ---
+	shape := c.FormValue("shape")
+	if shape == "" {
+		shape = "triangle"
+	}
 	dots := parseIntParam(c, "dots", defaultDots)
 	colors := parseIntParam(c, "colors", defaultColors)
 	rotateDeg := parseIntParam(c, "rotate", defaultRotate)
@@ -56,7 +60,19 @@ func Convert(c echo.Context) error {
 	}
 
 	// --- 変換 ---
-	result, err := converter.ConvertTriangle(img, dots, colors, rotateDeg)
+	var result image.Image
+
+	switch shape {
+	case "hexagon":
+		result, err = converter.ConvertHexagon(img, dots, colors, rotateDeg)
+	case "square":
+		result, err = converter.ConvertSquare(img, dots, colors, rotateDeg)
+	case "triangle":
+		fallthrough
+	default:
+		result, err = converter.ConvertTriangle(img, dots, colors, rotateDeg)
+	}
+
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "変換に失敗しました: "+err.Error())
 	}
