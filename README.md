@@ -95,6 +95,7 @@ make tidy        # go mod tidy
 | フィールド | 型 | 必須 | デフォルト | 説明 |
 |-----------|-----|------|----------|------|
 | `image` | ファイル | ✅ | — | 変換元画像（JPEG / PNG） |
+| `shape` | 文字列 | | `triangle` | 埋め尽くす図形 (`triangle`, `hexagon`, `square`) |
 | `dots` | 整数 | | `3000` | 点の総数（1以上） |
 | `colors` | 整数 | | `16` | 減色後の色数（5〜30） |
 | `rotate` | 整数 | | `0` | 回転角度（15の倍数、単位: 度） |
@@ -112,6 +113,7 @@ make tidy        # go mod tidy
 ```bash
 curl -X POST https://poly-dot-maker-962005752553.asia-northeast1.run.app/convert \
   -F "image=@photo.jpg" \
+  -F "shape=hexagon" \
   -F "dots=5000" \
   -F "colors=20" \
   -F "rotate=0" \
